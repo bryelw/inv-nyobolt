@@ -27,37 +27,39 @@
             fetchEVChargers(map);
         }
 
-        function fetchEVChargers(map) {
-            const apiUrl = 'http://chargepoints.dft.gov.uk/api/retrieve/registry/country/gb/format/json';
+        async function fetchEVChargers(map) {
+            async function fetchEVChargers(map) {
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const apiUrl = 'http://chargepoints.dft.gov.uk/api/retrieve/registry/country/gb/format/json';
 
-            fetch(apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (!Array.isArray(data)) {
-                        throw new Error('Data format is not an array');
-                    }
+    fetch(proxyUrl + apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Data format is not an array');
+            }
 
-                    data.forEach(charger => {
-                        const lat = parseFloat(charger.Latitude);
-                        const lng = parseFloat(charger.Longitude);
+            data.forEach(charger => {
+                const lat = parseFloat(charger.Latitude);
+                const lng = parseFloat(charger.Longitude);
 
-                        if (!isNaN(lat) && !isNaN(lng)) {
-                            new google.maps.Marker({
-                                position: { lat: lat, lng: lng },
-                                map: map,
-                                title: charger.ChargeDeviceRef // This can be replaced with any other data you want to show
-                            });
-                        }
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    new google.maps.Marker({
+                        position: { lat: lat, lng: lng },
+                        map: map,
+                        title: charger.ChargeDeviceRef
                     });
-                })
-                .catch(error => console.error('Error:', error));
-        }
-
+                }
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
         window.initMap = initMap;
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWNLAaPFbTCmaUYGj33tkKOSX8roI5q8k&callback=initMap" defer></script>
