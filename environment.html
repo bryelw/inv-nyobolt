@@ -5,15 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Battery Data Visualization</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
             text-align: center;
         }
         table {
             border-collapse: collapse;
             width: 100%;
+        }
+
+        canvas {
+            border: 1px solid #ffffff;
+            border-radius: 10px;
+            /* Add border to canvas */
+        }
+
+        tr:hover {
+            background-color: #00fffb4d;
+            /* Change color on hover */
         }
 
         th,
@@ -24,12 +35,13 @@
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #161616;
         }
     </style>
 </head>
 
 <body>
+    <a href="homepage.html" class="back-button">&#8592;</a>
     <h1>Battery Data Visualization</h1>
     <h2>Battery Percentage Over Time</h2>
     <canvas id="batteryChart" width="800" height="400"></canvas>
@@ -53,6 +65,7 @@
             <!-- Table data will be dynamically populated -->
         </tbody>
     </table>
+    <footer>&copy; 2024 Battery Company</footer>
 
     <script>
         // Function to generate correlated data for batteries over time
@@ -63,18 +76,18 @@
             let prevTemperature = Math.random() * 50; // Initial temperature
             let prevDegradationRate = Math.random() * 0.1; // Initial degradation rate
             let prevUseRate = Math.random() * 200; // Initial use rate
-    
+
             while (currentDate <= endDateObj) {
                 // Generate battery percentage
                 const batteryPercentage = Math.max(Math.random() * 100, 0); // Ensure battery percentage is non-negative
-    
+
                 // Generate temperature (positively correlated with previous temperature and use rate)
                 let temperature = Math.max(prevTemperature + (Math.random() - 0.5) * 5 + prevUseRate * 0.05, 0); // Ensure temperature is non-negative
                 prevTemperature = temperature;
-    
+
                 // Generate charge rate (negatively correlated with previous degradation rate)
                 let chargeRate = Math.max(Math.random() * 2, 0); // Ensure charge rate is non-negative
-    
+
                 // Generate degradation rate (positively correlated with previous use rate and negatively correlated with charge rate)
                 let degradationRate = Math.max(prevDegradationRate + (Math.random() - 0.5) * 0.02, 0); // Ensure degradation rate is non-negative
                 // Adjust degradation rate based on previous use rate (positively correlated)
@@ -82,11 +95,11 @@
                 // Adjust degradation rate based on charge rate (negatively correlated)
                 degradationRate += Math.max((2 - chargeRate) * 0.01, 0); // Ensure degradation rate is non-negative
                 prevDegradationRate = degradationRate;
-    
+
                 // Generate use rate
                 let useRate = Math.max(Math.random() * 100, 0); // Ensure use rate is non-negative
                 prevUseRate = useRate;
-    
+
                 data.push({
                     date: new Date(currentDate), // Current date
                     batteryPercentage: batteryPercentage.toFixed(2),
@@ -95,21 +108,21 @@
                     degradationRate: degradationRate.toFixed(2),
                     useRate: useRate.toFixed(2)
                 });
-    
+
                 currentDate.setTime(currentDate.getTime() + interval);
             }
-    
+
             return data;
         }
-    
-    
+
+
         // Generate data for one month (30 days) with hourly intervals
         const startDate = '2024-01-29T00:00:00';
         const endDate = '2024-01-30T23:59:59';
         const interval = 3600000; // 1 hour in milliseconds
-    
+
         const batteryData = generateBatteryData(startDate, endDate, interval);
-    
+
         // Populate table
         const tableBody = document.querySelector('#batteryTable tbody');
         batteryData.forEach(data => {
@@ -124,7 +137,7 @@
             `;
             tableBody.appendChild(row);
         });
-    
+
         // Create chart for battery percentage
         const ctx1 = document.getElementById('batteryChart').getContext('2d');
         const chart1 = new Chart(ctx1, {
@@ -149,7 +162,7 @@
                 }
             }
         });
-    
+
         // Create chart for temperature and use rate
         const ctx2 = document.getElementById('tempUseChart').getContext('2d');
         const chart2 = new Chart(ctx2, {
@@ -181,7 +194,7 @@
                 }
             }
         });
-    
+
         // Create chart for charge rate and degradation rate
         const ctx3 = document.getElementById('chargeDegradationChart').getContext('2d');
         const chart3 = new Chart(ctx3, {
@@ -214,7 +227,7 @@
             }
         });
     </script>
-    
+
 </body>
 
 </html>
