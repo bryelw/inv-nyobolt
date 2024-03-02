@@ -12,18 +12,28 @@
         #map {
             height: 100%;
         }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <div id="loading">Loading chargers...</div>
     <script>
         function initMap() {
             const map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: 55.3781, lng: -3.4360 }, // Center map over the UK
+                center: { lat: 55.3781, lng: -3.4360 },
                 zoom: 6,
             });
 
-            // Fetch EV charger data
             fetchEVChargers(map);
         }
 
@@ -32,34 +42,63 @@
             const apiUrl = 'http://chargepoints.dft.gov.uk/api/retrieve/registry/country/gb/format/json';
 
             fetch(proxyUrl + apiUrl)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
-                    // Handle the data format specific to the API response
-                    const chargers = data.ChargeDevice; // Assuming the array of chargers is in this path
+                    const chargers = data.ChargeDevice;
+                    if (!Array.isArray(chargers)) {
+                        console.error('Data format is not an array:', chargers);
+                        return;
+                    }
 
                     chargers.forEach(charger => {
-                        const lat = parseFloat(charger.ChargeDeviceLocation.Latitude);
-                        const lng = parseFloat(charger.ChargeDeviceLocation.Longitude);
-
+                        const lat = parseFloat(charger.Latitude);
+                        const lng = parseFloat(charger.Longitude);
                         if (!isNaN(lat) && !isNaN(lng)) {
-                            new google.maps.Marker({
-                                position: { lat: lat, lng: lng },
-                                map: map,
-                                title: charger.ChargeDeviceRef // Customize this title as needed
+                            const marker = new google.maps.Marker({
+                                position: { lat, lng },
+                                map,
+                                title: charger.ChargeDeviceRef
+                            });
+
+                            const infowindow = new google.maps.InfoWindow({
+                                content: generateInfoWindowContent(charger)
+                            });
+
+                            marker.addListener('click', () => {
+                                infowindow.open(map, marker);
                             });
                         }
                     });
+
+                    document.getElementById('loading').style.display = 'none';
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('loading').innerText = 'Failed to load chargers';
+                });
+        }
+
+        function generateInfoWindowContent(charger) {
+            // Ensure that the fields exist in the charger object
+            const chargeDeviceRef = charger.ChargeDeviceRef || 'N/A';
+            const location = charger.Location || 'Unknown location';
+            const postcode = charger.Postcode || 'No postcode';
+            const powerRating = charger.PowerRating ? charger.PowerRating + ' kW' : 'Unknown power rating';
+            const chargingType = charger.ChargingType || 'Unknown type';
+
+            return `
+                <div>
+                    <h3>${chargeDeviceRef}</h3>
+                    <p><strong>Location:</strong> ${location}</p>
+                    <p><strong>Postcode:</strong> ${postcode}</p>
+                    <p><strong>Power Rating:</strong> ${powerRating}</p>
+                    <p><strong>Charging Type:</strong> ${chargingType}</p>
+                </div>
+            `;
         }
 
         window.initMap = initMap;
     </script>
-    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWNLAaPFbTCmaUYGj33tkKOSX8roI5q8k&callback=initMap"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWNLAaPFbTCmaUYGj33tkKOSX8roI5q8k&callback=initMap" defer></script>
 </body>
 </html>
