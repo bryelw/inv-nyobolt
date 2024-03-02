@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battery Data Visualization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Battery Data Visualization</h1>
+    <h2>Battery Percentage Over Time</h2>
+    <canvas id="batteryChart" width="800" height="400"></canvas>
+    <h2>Temperature And Battery Use Over Time</h2>
+    <canvas id="tempUseChart" width="800" height="400"></canvas>
+    <h2>Charge Rate And Degradation Rate Over Time</h2>
+    <canvas id="chargeDegradationChart" width="800" height="400"></canvas>
+    <h2>Table Displaying All Battery Data</h2>
+    <table id="batteryTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Battery Percentage (%)</th>
+                <th>Temperature (°C)</th>
+                <th>Charge Rate</th>
+                <th>Degradation Rate</th>
+                <th>Use Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Table data will be dynamically populated -->
+        </tbody>
+    </table>
+
+    <script>
+        // Function to generate correlated data for batteries over time
+        function generateBatteryData(startDate, endDate, interval) {
+            const data = [];
+            let currentDate = new Date(startDate);
+            const endDateObj = new Date(endDate);
+            let prevTemperature = Math.random() * 50; // Initial temperature
+            let prevDegradationRate = Math.random() * 0.1; // Initial degradation rate
+            let prevUseRate = Math.random() * 200; // Initial use rate
+    
+            while (currentDate <= endDateObj) {
+                // Generate battery percentage
+                const batteryPercentage = Math.max(Math.random() * 100, 0); // Ensure battery percentage is non-negative
+    
+                // Generate temperature (positively correlated with previous temperature and use rate)
+                let temperature = Math.max(prevTemperature + (Math.random() - 0.5) * 5 + prevUseRate * 0.05, 0); // Ensure temperature is non-negative
+                prevTemperature = temperature;
+    
+                // Generate charge rate (negatively correlated with previous degradation rate)
+                let chargeRate = Math.max(Math.random() * 2, 0); // Ensure charge rate is non-negative
+    
+                // Generate degradation rate (positively correlated with previous use rate and negatively correlated with charge rate)
+                let degradationRate = Math.max(prevDegradationRate + (Math.random() - 0.5) * 0.02, 0); // Ensure degradation rate is non-negative
+                // Adjust degradation rate based on previous use rate (positively correlated)
+                degradationRate += Math.max(prevUseRate * 0.001, 0); // Ensure degradation rate is non-negative
+                // Adjust degradation rate based on charge rate (negatively correlated)
+                degradationRate += Math.max((2 - chargeRate) * 0.01, 0); // Ensure degradation rate is non-negative
+                prevDegradationRate = degradationRate;
+    
+                // Generate use rate
+                let useRate = Math.max(Math.random() * 100, 0); // Ensure use rate is non-negative
+                prevUseRate = useRate;
+    
+                data.push({
+                    date: new Date(currentDate), // Current date
+                    batteryPercentage: batteryPercentage.toFixed(2),
+                    temperature: temperature.toFixed(2),
+                    chargeRate: chargeRate.toFixed(2),
+                    degradationRate: degradationRate.toFixed(2),
+                    useRate: useRate.toFixed(2)
+                });
+    
+                currentDate.setTime(currentDate.getTime() + interval);
+            }
+    
+            return data;
+        }
+    
+    
+        // Generate data for one month (30 days) with hourly intervals
+        const startDate = '2024-01-29T00:00:00';
+        const endDate = '2024-01-30T23:59:59';
+        const interval = 3600000; // 1 hour in milliseconds
+    
+        const batteryData = generateBatteryData(startDate, endDate, interval);
+    
+        // Populate table
+        const tableBody = document.querySelector('#batteryTable tbody');
+        batteryData.forEach(data => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${data.date}</td>
+                <td>${data.batteryPercentage}</td>
+                <td>${data.temperature}</td>
+                <td>${data.chargeRate}</td>
+                <td>${data.degradationRate}</td>
+                <td>${data.useRate}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    
+        // Create chart for battery percentage
+        const ctx1 = document.getElementById('batteryChart').getContext('2d');
+        const chart1 = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: batteryData.map(data => data.date.toLocaleString()),
+                datasets: [{
+                    label: 'Battery Percentage (%)',
+                    data: batteryData.map(data => data.batteryPercentage),
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false // Adjusted to false
+                        }
+                    }]
+                }
+            }
+        });
+    
+        // Create chart for temperature and use rate
+        const ctx2 = document.getElementById('tempUseChart').getContext('2d');
+        const chart2 = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: batteryData.map(data => data.date.toLocaleString()),
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: batteryData.map(data => data.temperature),
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Use Rate',
+                    data: batteryData.map(data => data.useRate),
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false // Adjusted to false
+                        }
+                    }]
+                }
+            }
+        });
+    
+        // Create chart for charge rate and degradation rate
+        const ctx3 = document.getElementById('chargeDegradationChart').getContext('2d');
+        const chart3 = new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: batteryData.map(data => data.date.toLocaleString()),
+                datasets: [{
+                    label: 'Charge Rate',
+                    data: batteryData.map(data => data.chargeRate),
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Degradation Rate',
+                    data: batteryData.map(data => data.degradationRate),
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: false // Adjusted to false
+                        }
+                    }]
+                }
+            }
+        });
+    </script>
+    
+</body>
+
+</html>
