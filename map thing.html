@@ -28,40 +28,38 @@
         }
 
         async function fetchEVChargers(map) {
-            async function fetchEVChargers(map) {
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const apiUrl = 'http://chargepoints.dft.gov.uk/api/retrieve/registry/country/gb/format/json';
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const apiUrl = 'http://chargepoints.dft.gov.uk/api/retrieve/registry/country/gb/format/json';
 
-    fetch(proxyUrl + apiUrl)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (!Array.isArray(data)) {
-                throw new Error('Data format is not an array');
-            }
+            fetch(proxyUrl + apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Handle the data format specific to the API response
+                    const chargers = data.ChargeDevice; // Assuming the array of chargers is in this path
 
-            data.forEach(charger => {
-                const lat = parseFloat(charger.Latitude);
-                const lng = parseFloat(charger.Longitude);
+                    chargers.forEach(charger => {
+                        const lat = parseFloat(charger.ChargeDeviceLocation.Latitude);
+                        const lng = parseFloat(charger.ChargeDeviceLocation.Longitude);
 
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    new google.maps.Marker({
-                        position: { lat: lat, lng: lng },
-                        map: map,
-                        title: charger.ChargeDeviceRef
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            new google.maps.Marker({
+                                position: { lat: lat, lng: lng },
+                                map: map,
+                                title: charger.ChargeDeviceRef // Customize this title as needed
+                            });
+                        }
                     });
-                }
-            });
-        })
-        .catch(error => console.error('Error:', error));
-    }
-}
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
         window.initMap = initMap;
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWNLAaPFbTCmaUYGj33tkKOSX8roI5q8k&callback=initMap" defer></script>
+    <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCWNLAaPFbTCmaUYGj33tkKOSX8roI5q8k&callback=initMap"></script>
 </body>
 </html>
